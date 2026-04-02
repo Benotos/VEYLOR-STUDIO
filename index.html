@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VEYLOR STUDIO — Solana Frontend & 2D Art</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #080808;
+    --white: #f0ece3;
+    --cream: #e8e2d5;
+    --accent: #c8f135;
+    --accent2: #9945ff;
+    --muted: #444;
+    --border: rgba(240,236,227,0.12);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    mix-blend-mode: difference;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3rem;
+    background: transparent;
+    mix-blend-mode: normal;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.15em;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  nav ul { list-style: none; display: flex; gap: 2.5rem; }
+  nav ul a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--cream);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  nav ul a:hover { opacity: 1; color: var(--accent); }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 3rem;
+    padding-bottom: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(153,69,255,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(200,241,53,0.08) 0%, transparent 60%);
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 15vw, 13rem);
+    line-height: 0.88;
+    letter-spacing: -0.01em;
+    color: var(--white);
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+  }
+
+  .hero-title .outline {
+    -webkit-text-stroke: 1.5px var(--white);
+    color: transparent;
+  }
+
+  .hero-title .accent-word { color: var(--accent); }
+
+  .hero-sub {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.6s forwards;
+  }
+
+  .hero-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--cream);
+    opacity: 0.6;
+    max-width: 360px;
+    line-height: 1.8;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .btn-primary {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    padding: 0.9rem 2rem;
+    background: var(--accent);
+    color: #080808;
+    border: none;
+    text-decoration: none;
+    font-weight: 500;
+    transition: transform 0.2s, background 0.2s;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { transform: translate(-2px, -2px); background: #d4ff50; }
+
+  .btn-ghost {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    padding: 0.9rem 2rem;
+    background: transparent;
+    color: var(--white);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+    display: inline-block;
+  }
+
+  .btn-ghost:hover { border-color: var(--white); }
+
+  .scroll-hint {
+    position: absolute;
+    right: 3rem;
+    bottom: 4rem;
+    writing-mode: vertical-rl;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    animation: fadeUp 1s ease 1s forwards;
+    opacity: 0;
+  }
+
+  /* Marquee */
+  .marquee-wrap {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    padding: 1rem 0;
+    background: transparent;
+  }
+
+  .marquee-track {
+    display: flex;
+    gap: 3rem;
+    animation: marquee 18s linear infinite;
+    white-space: nowrap;
+  }
+
+  .marquee-item {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .marquee-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* Sections */
+  section { padding: 6rem 3rem; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .section-label::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 0.95;
+    margin-bottom: 3rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* Services */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+
+  .service-card {
+    background: var(--black);
+    padding: 2.5rem 2rem;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .service-card:hover { background: #0e0e0e; }
+
+  .service-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .service-card:hover::before { transform: scaleX(1); }
+
+  .service-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--border);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+
+  .service-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    color: var(--white);
+  }
+
+  .service-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--cream);
+    opacity: 0.55;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+  }
+
+  .service-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+
+  /* Work */
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .work-card {
+    background: var(--black);
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: var(--white);
+  }
+
+  .work-card-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #111 0%, #0a0a0a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    color: rgba(255,255,255,0.04);
+    letter-spacing: 0.1em;
+    transition: transform 0.4s ease;
+  }
+
+  .work-card:hover .work-card-bg { transform: scale(1.05); }
+
+  .work-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
+  }
+
+  .work-info {
+    position: relative;
+    z-index: 1;
+  }
+
+  .work-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .work-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  .work-arrow {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    z-index: 1;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .work-card:hover .work-arrow {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #080808;
+  }
+
+  /* Art grid */
+  .art-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 1px;
+  }
+
+  .art-cell {
+    aspect-ratio: 1;
+    background: #0d0d0d;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .art-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+    display: block;
+  }
+
+  .art-cell:hover img { transform: scale(1.08); }
+
+  .art-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Contact */
+  .contact-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .contact-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+  }
+
+  .contact-big span { color: var(--accent); }
+
+  .contact-links { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.5rem;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--white);
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .contact-link:hover { border-color: var(--accent); background: rgba(200,241,53,0.04); }
+
+  .contact-link-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .contact-link-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .contact-link-arrow { opacity: 0.5; font-size: 1.2rem; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 1.5rem; }
+    nav ul { display: none; }
+    .hero { padding: 1.5rem; padding-bottom: 3rem; }
+    section { padding: 4rem 1.5rem; }
+    .services-grid { grid-template-columns: 1fr; }
+    .work-grid { grid-template-columns: 1fr; }
+    .art-grid { grid-template-columns: repeat(3, 1fr); }
+    .contact-wrap { grid-template-columns: 1fr; gap: 2rem; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+    .scroll-hint { display: none; }
+    body { cursor: auto; }
+    .cursor { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+
+<nav>
+  <a href="#" class="nav-logo">VEYLOR<span>.</span>STUDIO</a>
+  <ul>
+    <li><a href="#work">WORK</a></li>
+    <li><a href="#services">SERVICES</a></li>
+    <li><a href="#art">ART</a></li>
+    <li><a href="#contact">CONTACT</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-label">SOLANA FRONTEND & 2D CHARACTER ART</div>
+  <h1 class="hero-title">
+    VEYLOR<br>
+    <span class="outline">STUDIO</span>
+  </h1>
+  <div class="hero-sub">
+    <p class="hero-desc">
+      Full-stack creative studio for Solana projects.<br>
+      Websites that launch. Art that gets noticed.
+    </p>
+    <div class="hero-cta">
+      <a href="#contact" class="btn-primary">START A PROJECT</a>
+      <a href="#work" class="btn-ghost">VIEW WORK</a>
+    </div>
+  </div>
+  <span class="scroll-hint">SCROLL TO EXPLORE</span>
+</section>
+
+<!-- Marquee -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item"><span class="marquee-dot"></span>SOLANA NATIVE</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>LANDING PAGES</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>PFP GENERATORS</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>2D CHARACTER ART</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>MEME COIN SITES</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>FAST DELIVERY</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>WEB3 CREATIVE</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>SOLANA NATIVE</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>LANDING PAGES</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>PFP GENERATORS</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>2D CHARACTER ART</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>MEME COIN SITES</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>FAST DELIVERY</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>WEB3 CREATIVE</span>
+  </div>
+</div>
+
+<!-- Services -->
+<section id="services">
+  <div class="section-label">WHAT I BUILD</div>
+  <h2 class="section-title">SERVICES</h2>
+
+  <div class="services-grid reveal">
+    <div class="service-card">
+      <div class="service-num">01</div>
+      <div class="service-name">LANDING PAGE</div>
+      <p class="service-desc">Clean, conversion-focused Solana project sites. Tokenomics, roadmap, socials — everything your community needs.</p>
+      <div class="service-price">FROM $500</div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">02</div>
+      <div class="service-name">PFP GENERATOR</div>
+      <p class="service-desc">Full site with integrated PFP generator. Let your holders build their own identity on-chain.</p>
+      <div class="service-price">FROM $700</div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">03</div>
+      <div class="service-name">2D CHARACTER ART</div>
+      <p class="service-desc">Meme characters, mascots, banners, pfps. Art that makes your project impossible to ignore.</p>
+      <div class="service-price">FROM $60 / PIECE</div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">04</div>
+      <div class="service-name">FULL LAUNCH PACKAGE</div>
+      <p class="service-desc">Landing page + full art suite — mascot, banner, pfps. Everything a Solana project needs to launch hard.</p>
+      <div class="service-price">FROM $1,000</div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">05</div>
+      <div class="service-name">ART BATCH ORDERS</div>
+      <p class="service-desc">Need 10, 20, 50 art pieces for your collection or campaign? Bulk commissions with fast turnaround.</p>
+      <div class="service-price">CUSTOM QUOTE</div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">06</div>
+      <div class="service-name">RETAINER</div>
+      <p class="service-desc">Monthly priority access. Regular art drops, site updates, new pages — your studio on speed dial.</p>
+      <div class="service-price">FROM $400 / MO</div>
+    </div>
+  </div>
+</section>
+
+<!-- Work -->
+<section id="work">
+  <div class="section-label">SELECTED PROJECTS</div>
+  <h2 class="section-title">WEBSITES</h2>
+
+  <div class="work-grid reveal">
+    <a href="https://dichi.fun" target="_blank" rel="noopener" class="work-card">
+      <div class="work-card-bg">DICHI</div>
+      <span class="work-arrow">↗</span>
+      <div class="work-info">
+        <span class="work-tag">MEMECOIN + PFP GENERATOR</span>
+        <div class="work-name">DICHI.FUN</div>
+      </div>
+    </a>
+    <a href="https://cwatsol.fun" target="_blank" rel="noopener" class="work-card">
+      <div class="work-card-bg">CWAT</div>
+      <span class="work-arrow">↗</span>
+      <div class="work-info">
+        <span class="work-tag">SOLANA MEMECOIN</span>
+        <div class="work-name">CWATSOL.FUN</div>
+      </div>
+    </a>
+    <a href="https://donkesol.com" target="_blank" rel="noopener" class="work-card">
+      <div class="work-card-bg">DONKE</div>
+      <span class="work-arrow">↗</span>
+      <div class="work-info">
+        <span class="work-tag">SOLANA PROJECT</span>
+        <div class="work-name">DONKESOL.COM</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- Art -->
+<section id="art">
+  <div class="section-label">2D CHARACTER ART</div>
+  <h2 class="section-title">ART GALLERY</h2>
+
+  <div class="art-grid reveal">
+    <div class="art-cell">
+      <img src="meme1.jpg" alt="Meme art 1" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 01</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme2.jpg" alt="Meme art 2" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 02</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme3.jpg" alt="Meme art 3" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 03</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme4.jpg" alt="Meme art 4" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 04</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme5.jpg" alt="Meme art 5" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 05</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme6.jpg" alt="Meme art 6" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 06</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme7.jpg" alt="Meme art 7" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 07</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme8.jpg" alt="Meme art 8" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 08</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme9.jpg" alt="Meme art 9" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 09</div>
+    </div>
+    <div class="art-cell">
+      <img src="meme10.jpg" alt="Meme art 10" onerror="this.style.display='none'; this.parentNode.querySelector('.art-placeholder').style.display='flex'">
+      <div class="art-placeholder" style="display:none">ART 10</div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+  <div class="section-label">GET IN TOUCH</div>
+  <div class="contact-wrap">
+    <div>
+      <h2 class="contact-big reveal">LET'S<br>BUILD<br><span>TOGETHER.</span></h2>
+    </div>
+    <div class="contact-links reveal">
+      <a href="https://t.me/v3ylor" target="_blank" class="contact-link">
+        <div>
+          <span class="contact-link-label">TELEGRAM</span>
+          <span class="contact-link-val">VEYLOR STUDIO</span>
+        </div>
+        <span class="contact-link-arrow">↗</span>
+      </a>
+      <a href="https://x.com/benotosdev" target="_blank" class="contact-link">
+        <div>
+          <span class="contact-link-label">X — FRONTEND DEV</span>
+          <span class="contact-link-val">@benotosdev</span>
+        </div>
+        <span class="contact-link-arrow">↗</span>
+      </a>
+      <a href="https://x.com/v3ylor" target="_blank" class="contact-link">
+        <div>
+          <span class="contact-link-label">X — 2D ARTIST</span>
+          <span class="contact-link-val">@v3ylor</span>
+        </div>
+        <span class="contact-link-arrow">↗</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>© 2025 VEYLOR STUDIO. ALL RIGHTS RESERVED.</p>
+  <p>SOLANA FRONTEND + 2D ART STUDIO</p>
+</footer>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX - 5 + 'px';
+    cursor.style.top = e.clientY - 5 + 'px';
+  });
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(3)');
+    el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
