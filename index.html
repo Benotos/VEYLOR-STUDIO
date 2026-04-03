@@ -564,6 +564,8 @@
     <li><a href="#services">SERVICES</a></li>
     <li><a href="#art">ART</a></li>
     <li><a href="#contact">CONTACT</a></li>
+    <li><a href="dev.html" style="color: var(--accent2); opacity:1;">DEV →</a></li>
+    <li><a href="art.html" style="color: var(--accent); opacity:1;">ART →</a></li>
   </ul>
 </nav>
 
@@ -608,6 +610,49 @@
   </div>
 </div>
 
+<!-- Split — Choose your path -->
+<section style="padding: 5rem 3rem;">
+  <div class="section-label">EXPLORE THE STUDIO</div>
+  <h2 class="section-title">TWO DISCIPLINES.<br>ONE STUDIO.</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border);">
+
+    <a href="dev.html" style="text-decoration:none; color: var(--white); background: var(--black); padding: 3rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px; position: relative; overflow: hidden; transition: background 0.25s;" onmouseover="this.style.background='#0e0e0e'" onmouseout="this.style.background='var(--black)'">
+      <div>
+        <div style="font-family:'DM Mono',monospace; font-size:0.68rem; letter-spacing:0.2em; color:var(--accent2); margin-bottom:1rem;">FRONTEND DEVELOPMENT</div>
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <a href="https://x.com/benotosdev" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="flex-shrink:0; width:48px; height:48px; border-radius:50%; border:2px solid var(--accent2); overflow:hidden; background:#111; display:flex; align-items:center; justify-content:center; text-decoration:none; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+            <img src="pfp-dev.jpg" alt="@benotosdev" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.display='none'; this.parentNode.innerHTML+='<span style=\'font-family:Bebas Neue,sans-serif;font-size:1rem;color:var(--accent2)\'>BN</span>'">
+          </a>
+          <div style="font-family:'Bebas Neue',sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height:0.95; letter-spacing:0.02em;">BENOTOS DEV</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div style="font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--cream); opacity:0.5; line-height:1.8;">Landing pages · PFP generators<br>Memecoin sites · Solana native</div>
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:1.8rem; color:var(--accent2);">→</div>
+      </div>
+      <div style="position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--accent2);"></div>
+    </a>
+
+    <a href="art.html" style="text-decoration:none; color: var(--white); background: var(--black); padding: 3rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px; position: relative; overflow: hidden; transition: background 0.25s;" onmouseover="this.style.background='#0e0e0e'" onmouseout="this.style.background='var(--black)'">
+      <div>
+        <div style="font-family:'DM Mono',monospace; font-size:0.68rem; letter-spacing:0.2em; color:var(--accent); margin-bottom:1rem;">2D CHARACTER ART</div>
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <a href="https://x.com/v3ylor" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="flex-shrink:0; width:48px; height:48px; border-radius:50%; border:2px solid var(--accent); overflow:hidden; background:#111; display:flex; align-items:center; justify-content:center; text-decoration:none; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+            <img src="pfp-art.jpg" alt="@v3ylor" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.display='none'; this.parentNode.innerHTML+='<span style=\'font-family:Bebas Neue,sans-serif;font-size:1rem;color:var(--accent)\'>VY</span>'">
+          </a>
+          <div style="font-family:'Bebas Neue',sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height:0.95; letter-spacing:0.02em;">V3YLOR <span style="-webkit-text-stroke:1.5px var(--white); color:transparent;">ART</span></div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div style="font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--cream); opacity:0.5; line-height:1.8;">Mascots · Meme characters<br>PFPs · Banners · Batch orders</div>
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:1.8rem; color:var(--accent);">→</div>
+      </div>
+      <div style="position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--accent);"></div>
+    </a>
+
+  </div>
+</section>
+
 <!-- Services -->
 <section id="services">
   <div class="section-label">WHAT I BUILD</div>
@@ -617,38 +662,46 @@
     <div class="service-card">
       <div class="service-num">01</div>
       <div class="service-name">LANDING PAGE</div>
-      <p class="service-desc">Clean, conversion-focused Solana project sites. Tokenomics, roadmap, socials — everything your community needs.</p>
-      <div class="service-price">FROM $500</div>
+      <p class="service-desc">Clean, conversion-focused web3 landing pages. Tokenomics, roadmap, memes — everything your project needs.</p>
+      <div class="service-price">FROM $250</div>
     </div>
     <div class="service-card">
       <div class="service-num">02</div>
       <div class="service-name">PFP GENERATOR</div>
-      <p class="service-desc">Full site with integrated PFP generator. Let your holders build their own identity on-chain.</p>
-      <div class="service-price">FROM $700</div>
+      <p class="service-desc">Full site with integrated PFP generator. Let your holders create identities on-chain.</p>
+      <div class="service-price">FROM $500</div>
     </div>
     <div class="service-card">
       <div class="service-num">03</div>
       <div class="service-name">2D CHARACTER ART</div>
-      <p class="service-desc">Meme characters, mascots, banners, pfps. Art that makes your project impossible to ignore.</p>
-      <div class="service-price">FROM $60 / PIECE</div>
+      <p class="service-desc">Meme characters, mascots, banners, pfps. Clean, simple, and made to stand out.</p>
+      <div class="service-price">FROM $20 / PIECE</div>
+      <div style="font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--accent); margin-top:0.4rem; letter-spacing:0.05em;">MAIN CHARACTER FROM $60</div>
     </div>
     <div class="service-card">
       <div class="service-num">04</div>
       <div class="service-name">FULL LAUNCH PACKAGE</div>
-      <p class="service-desc">Landing page + full art suite — mascot, banner, pfps. Everything a Solana project needs to launch hard.</p>
-      <div class="service-price">FROM $1,000</div>
+      <p class="service-desc">Landing page + mascot + banner + meme pack. Everything needed to launch properly.</p>
+      <div class="service-price">FROM $500</div>
     </div>
     <div class="service-card">
       <div class="service-num">05</div>
       <div class="service-name">ART BATCH ORDERS</div>
-      <p class="service-desc">Need 10, 20, 50 art pieces for your collection or campaign? Bulk commissions with fast turnaround.</p>
-      <div class="service-price">CUSTOM QUOTE</div>
+      <p class="service-desc">Need 10, 20, 50+ meme pieces? Fast delivery with consistent style.</p>
+      <div class="service-price">STARTS FROM $200+</div>
     </div>
     <div class="service-card">
       <div class="service-num">06</div>
       <div class="service-name">RETAINER</div>
-      <p class="service-desc">Monthly priority access. Regular art drops, site updates, new pages — your studio on speed dial.</p>
-      <div class="service-price">FROM $400 / MO</div>
+      <p class="service-desc">Monthly priority access. Art drops, updates, new pages — on demand.</p>
+      <div class="service-price">FROM $300 / MO</div>
+    </div>
+    <div class="service-card" style="border-top: 1px solid rgba(200,241,53,0.2); position:relative;">
+      <div style="position:absolute; top:1.2rem; right:1.5rem; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; color:var(--accent); background:rgba(200,241,53,0.08); padding:3px 10px;">NEW</div>
+      <div class="service-num">07</div>
+      <div class="service-name">ANIMATIONS / INTERACTIONS</div>
+      <p class="service-desc">UI animations, coinflip, blackjack, transitions. Smooth, engaging visuals that keep users hooked.</p>
+      <div class="service-price">FROM $100</div>
     </div>
   </div>
 </section>
@@ -743,7 +796,7 @@
       <h2 class="contact-big reveal">LET'S<br>BUILD<br><span>TOGETHER.</span></h2>
     </div>
     <div class="contact-links reveal">
-      <a href="https://t.me/v3ylor" target="_blank" class="contact-link">
+      <a href="https://t.me/VEYLOR_STUDIO" target="_blank" class="contact-link">
         <div>
           <span class="contact-link-label">TELEGRAM</span>
           <span class="contact-link-val">VEYLOR STUDIO</span>

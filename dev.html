@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BENOTOS — Solana Frontend Developer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #080808;
+    --white: #f0ece3;
+    --cream: #e8e2d5;
+    --accent: #9945ff;
+    --accent-light: rgba(153,69,255,0.12);
+    --muted: #444;
+    --border: rgba(240,236,227,0.1);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  .cursor {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    mix-blend-mode: difference;
+  }
+
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3rem;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.15em;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-right a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--cream);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    opacity: 0.6;
+    transition: opacity 0.2s, color 0.2s;
+  }
+
+  .nav-right a:hover { opacity: 1; color: var(--accent); }
+
+  .nav-switch {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    color: var(--cream);
+    text-decoration: none;
+    opacity: 0.6;
+    transition: border-color 0.2s, opacity 0.2s;
+  }
+
+  .nav-switch:hover { border-color: var(--accent); opacity: 1; }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+    padding: 3rem;
+    padding-bottom: 4rem;
+    position: relative;
+    overflow: hidden;
+    gap: 4rem;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 50% 60% at 100% 0%, rgba(153,69,255,0.2) 0%, transparent 65%),
+      radial-gradient(ellipse 30% 30% at 0% 100%, rgba(153,69,255,0.06) 0%, transparent 60%);
+  }
+
+  .hero-left { position: relative; z-index: 1; }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.2s forwards;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4.5rem, 12vw, 10rem);
+    line-height: 0.88;
+    letter-spacing: -0.01em;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.35s forwards;
+  }
+
+  .hero-title .outline {
+    -webkit-text-stroke: 1.5px var(--white);
+    color: transparent;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.5s forwards;
+  }
+
+  .btn-primary {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    padding: 0.9rem 2rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    text-decoration: none;
+    transition: transform 0.2s, opacity 0.2s;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { transform: translate(-2px,-2px); opacity: 0.9; }
+
+  .btn-ghost {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    padding: 0.9rem 2rem;
+    background: transparent;
+    color: var(--white);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: border-color 0.2s;
+    display: inline-block;
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); }
+
+  .hero-right {
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.5s forwards;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .stat-cell {
+    background: var(--black);
+    padding: 1.5rem;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--cream);
+    opacity: 0.5;
+  }
+
+  .hero-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--cream);
+    opacity: 0.55;
+    line-height: 1.9;
+  }
+
+  /* Stack */
+  .stack-wrap {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 1.2rem 3rem;
+    display: flex;
+    gap: 3rem;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .stack-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .stack-items {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stack-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--cream);
+    opacity: 0.45;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+    transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .stack-item:hover { opacity: 1; border-color: var(--accent); color: var(--accent); }
+
+  /* Sections */
+  section { padding: 5rem 3rem; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .section-label::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 0.95;
+    margin-bottom: 3rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* Projects */
+  .projects-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+
+  .project-row {
+    display: grid;
+    grid-template-columns: 60px 1fr auto auto;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.8rem 2rem;
+    background: var(--black);
+    text-decoration: none;
+    color: var(--white);
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .project-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.25s ease;
+  }
+
+  .project-row:hover { background: #0c0c0c; }
+  .project-row:hover::before { transform: scaleY(1); }
+
+  .project-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    color: var(--muted);
+  }
+
+  .project-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.04em;
+  }
+
+  .project-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--cream);
+    opacity: 0.45;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+  }
+
+  .project-arrow {
+    font-size: 1.2rem;
+    opacity: 0.3;
+    transition: opacity 0.2s, color 0.2s;
+  }
+
+  .project-row:hover .project-arrow { opacity: 1; color: var(--accent); }
+
+  /* Services */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .service-card {
+    background: var(--black);
+    padding: 2rem 1.8rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.25s;
+  }
+
+  .service-card:hover { background: #0d0d0d; }
+
+  .service-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .service-card:hover::after { transform: scaleX(1); }
+
+  .service-icon {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--accent-light);
+    line-height: 1;
+    margin-bottom: 1rem;
+    color: rgba(153,69,255,0.2);
+  }
+
+  .service-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.6rem;
+  }
+
+  .service-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--cream);
+    opacity: 0.5;
+    line-height: 1.8;
+    margin-bottom: 1.2rem;
+  }
+
+  .service-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+
+  /* Contact */
+  .contact-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3rem;
+    border: 1px solid var(--border);
+    background: var(--black);
+    gap: 2rem;
+  }
+
+  .contact-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 1;
+    letter-spacing: 0.03em;
+  }
+
+  .contact-text span { color: var(--accent); }
+
+  .contact-actions { display: flex; gap: 1rem; flex-shrink: 0; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 1.5rem; }
+    .hero { grid-template-columns: 1fr; padding: 1.5rem; padding-top: 5rem; padding-bottom: 3rem; gap: 2.5rem; }
+    section { padding: 3.5rem 1.5rem; }
+    .services-grid { grid-template-columns: 1fr; }
+    .stack-wrap { padding: 1rem 1.5rem; }
+    .project-row { grid-template-columns: 40px 1fr auto; gap: 1rem; padding: 1.2rem 1rem; }
+    .project-type { display: none; }
+    .contact-bar { flex-direction: column; align-items: flex-start; padding: 2rem 1.5rem; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+    body { cursor: auto; }
+    .cursor { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo">VEYLOR<span>.</span>STUDIO</a>
+  <div class="nav-right">
+    <a href="#projects">PROJECTS</a>
+    <a href="#services">SERVICES</a>
+    <a href="#contact">HIRE ME</a>
+    <a href="art.html" class="nav-switch">VIEW ART →</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-left">
+    <div class="hero-label">SOLANA FRONTEND DEVELOPER</div>
+    <h1 class="hero-title">
+      BENO<br>
+      <span class="outline">TOS</span>
+    </h1>
+    <div class="hero-cta">
+      <a href="#contact" class="btn-primary">HIRE ME</a>
+      <a href="#projects" class="btn-ghost">SEE WORK</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="stats-grid">
+      <div class="stat-cell">
+        <div class="stat-num">10+</div>
+        <div class="stat-label">SITES SHIPPED</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">5.4K</div>
+        <div class="stat-label">X FOLLOWERS</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">3</div>
+        <div class="stat-label">ACTIVE CLIENTS</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">SOL</div>
+        <div class="stat-label">NATIVE</div>
+      </div>
+    </div>
+    <p class="hero-desc">
+      I build clean, fast Solana project sites —<br>
+      landing pages, memecoin sites, PFP generators.<br>
+      No templates. Built to launch.
+    </p>
+  </div>
+</section>
+
+<!-- Tech Stack -->
+<div class="stack-wrap">
+  <span class="stack-label">STACK</span>
+  <div class="stack-items">
+    <span class="stack-item">HTML / CSS</span>
+    <span class="stack-item">JAVASCRIPT</span>
+    <span class="stack-item">REACT</span>
+    <span class="stack-item">SOLANA WEB3.JS</span>
+    <span class="stack-item">VERCEL</span>
+    <span class="stack-item">FIGMA</span>
+  </div>
+</div>
+
+<!-- Projects -->
+<section id="projects">
+  <div class="section-label">SELECTED WORK</div>
+  <h2 class="section-title">PROJECTS</h2>
+
+  <div class="projects-list reveal">
+    <a href="https://dichi.fun" target="_blank" class="project-row">
+      <span class="project-num">01</span>
+      <span class="project-name">DICHI.FUN</span>
+      <span class="project-type">MEMECOIN + PFP GEN</span>
+      <span class="project-arrow">↗</span>
+    </a>
+    <a href="https://cwatsol.fun" target="_blank" class="project-row">
+      <span class="project-num">02</span>
+      <span class="project-name">CWATSOL.FUN</span>
+      <span class="project-type">SOLANA MEMECOIN</span>
+      <span class="project-arrow">↗</span>
+    </a>
+    <a href="https://donkesol.com" target="_blank" class="project-row">
+      <span class="project-num">03</span>
+      <span class="project-name">DONKESOL.COM</span>
+      <span class="project-type">SOLANA PROJECT</span>
+      <span class="project-arrow">↗</span>
+    </a>
+  </div>
+</section>
+
+<!-- Services -->
+<section id="services">
+  <div class="section-label">WHAT I BUILD</div>
+  <h2 class="section-title">SERVICES</h2>
+
+  <div class="services-grid reveal">
+    <div class="service-card">
+      <div class="service-icon">&lt;/&gt;</div>
+      <div class="service-name">LANDING PAGE</div>
+      <p class="service-desc">Solana project sites that convert. Tokenomics, roadmap, socials — everything your community needs on launch day.</p>
+      <div class="service-price">FROM $500</div>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">⬡⬡</div>
+      <div class="service-name">PFP GENERATOR</div>
+      <p class="service-desc">Full site with on-chain PFP generator. Let holders build their identity and drive community engagement.</p>
+      <div class="service-price">FROM $700</div>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">◈◈◈</div>
+      <div class="service-name">FULL LAUNCH PACK</div>
+      <p class="service-desc">Site + art assets in one bundle. Work with Veylor Studio's 2D artist and get everything under one roof.</p>
+      <div class="service-price">FROM $1,000</div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact" style="padding-top: 0;">
+  <div class="contact-bar reveal">
+    <div class="contact-text">NEED A<br><span>SOLANA SITE?</span></div>
+    <div class="contact-actions">
+      <a href="https://t.me/VEYLOR_STUDIO" target="_blank" class="btn-primary">DM ON TELEGRAM</a>
+      <a href="https://x.com/benotosdev" target="_blank" class="btn-ghost">@BENOTOSDEV</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 VEYLOR STUDIO</p>
+  <p>PART OF <a href="index.html" style="color: var(--accent); text-decoration: none;">VEYLOR.STUDIO</a></p>
+</footer>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX - 5 + 'px';
+    cursor.style.top = e.clientY - 5 + 'px';
+  });
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(3)');
+    el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
