@@ -361,6 +361,23 @@
     color: rgba(255,255,255,0.04);
     letter-spacing: 0.1em;
     transition: transform 0.4s ease;
+    overflow: hidden;
+  }
+
+  .work-card-bg img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .work-card:hover .work-card-bg img {
+    opacity: 0.35;
+    transform: scale(1.04);
   }
 
   .work-card:hover .work-card-bg { transform: scale(1.05); }
@@ -703,7 +720,7 @@
 
   <div class="work-grid reveal">
     <a href="https://dichi.fun" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">DICHI</div>
+      <div class="work-card-bg">DICHI<img src="https://image.thum.io/get/width/1200/crop/630/https://dichi.fun" alt="dichi preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">MEMECOIN + PFP GEN</span>
@@ -711,7 +728,7 @@
       </div>
     </a>
     <a href="https://cwatsol.fun" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">CWAT</div>
+      <div class="work-card-bg">CWAT<img src="https://image.thum.io/get/width/1200/crop/630/https://cwatsol.fun" alt="cwat preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">SOLANA MEMECOIN</span>
@@ -719,7 +736,7 @@
       </div>
     </a>
     <a href="https://donkesol.com" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">DONKE</div>
+      <div class="work-card-bg">DONKE<img src="https://image.thum.io/get/width/1200/crop/630/https://donkesol.com" alt="donke preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">SOLANA PROJECT</span>
@@ -727,7 +744,7 @@
       </div>
     </a>
     <a href="https://firesol.org" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">FIRE</div>
+      <div class="work-card-bg">FIRE<img src="https://image.thum.io/get/width/1200/crop/630/https://firesol.org" alt="firesol preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">SOLANA MEMECOIN</span>
@@ -735,7 +752,7 @@
       </div>
     </a>
     <a href="https://andysol.org" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">ANDY</div>
+      <div class="work-card-bg">ANDY<img src="https://image.thum.io/get/width/1200/crop/630/https://andysol.org" alt="andysol preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">SOLANA UTILITY</span>
@@ -743,7 +760,7 @@
       </div>
     </a>
     <a href="https://trust-solana.com" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">TRUST</div>
+      <div class="work-card-bg">TRUST<img src="https://image.thum.io/get/width/1200/crop/630/https://trust-solana.com" alt="trust preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">SOLANA MEME PROJECT</span>
@@ -751,7 +768,7 @@
       </div>
     </a>
     <a href="https://pengsol.fun" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">PENG</div>
+      <div class="work-card-bg">PENG<img src="https://image.thum.io/get/width/1200/crop/630/https://pengsol.fun" alt="peng preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">SOLANA MEMECOIN</span>
@@ -759,7 +776,7 @@
       </div>
     </a>
     <a href="https://peptonic-labs.vercel.app" target="_blank" rel="noopener" class="work-card">
-      <div class="work-card-bg">PEPT</div>
+      <div class="work-card-bg">PEPT<img src="https://image.thum.io/get/width/1200/crop/630/https://peptonic-labs.vercel.app" alt="peptonic preview" loading="lazy"></div>
       <span class="work-arrow">↗</span>
       <div class="work-info">
         <span class="work-tag">UK RESEARCH COMPANY</span>

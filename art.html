@@ -1,992 +1,1811 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V3YLOR — 2D Character Artist</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --black: #070707;
-  --white: #f0ece3;
-  --cream: #e8e2d5;
-  --accent: #c8f135;
-  --accent-dim: rgba(200,241,53,0.12);
-  --muted: #333;
-  --border: rgba(240,236,227,0.08);
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--black);
-  color: var(--white);
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
-  overflow-x: hidden;
-  cursor: none;
-}
-
-/* ========== NOISE OVERLAY ========== */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 9998;
-  opacity: 0.35;
-}
-
-/* ========== CUSTOM CURSOR ========== */
-.cursor-dot {
-  width: 8px; height: 8px;
-  background: var(--accent);
-  border-radius: 50%;
-  position: fixed;
-  top: 0; left: 0;
-  pointer-events: none;
-  z-index: 99999;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s, background 0.3s;
-}
-
-.cursor-ring {
-  width: 40px; height: 40px;
-  border: 1px solid rgba(200,241,53,0.5);
-  border-radius: 50%;
-  position: fixed;
-  top: 0; left: 0;
-  pointer-events: none;
-  z-index: 99998;
-  transform: translate(-50%, -50%);
-  transition: width 0.4s, height 0.4s, border-color 0.3s;
-}
-
-.cursor-dot.hovering { width: 12px; height: 12px; background: var(--white); }
-.cursor-ring.hovering { width: 60px; height: 60px; border-color: var(--accent); }
-
-/* ========== FLOATING ORBS ========== */
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(80px);
-  opacity: 0;
-  animation: orbFloat 1s ease forwards;
-}
-
-.orb1 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(200,241,53,0.06) 0%, transparent 70%);
-  top: -100px; right: -100px;
-  animation-delay: 0.5s;
-  animation: orbPulse1 8s ease-in-out infinite, fadeInOrb 1s ease 0.5s forwards;
-}
-
-.orb2 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, rgba(200,241,53,0.04) 0%, transparent 70%);
-  bottom: 20%; left: -80px;
-  animation: orbPulse2 10s ease-in-out infinite, fadeInOrb 1s ease 0.8s forwards;
-}
-
-@keyframes fadeInOrb { from { opacity: 0; } to { opacity: 1; } }
-@keyframes orbPulse1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-30px, 40px) scale(1.05); }
-  66% { transform: translate(20px, -20px) scale(0.95); }
-}
-@keyframes orbPulse2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(40px, -60px) scale(1.1); }
-}
-
-/* ========== PAGE LOADER ========== */
-.loader {
-  position: fixed;
-  inset: 0;
-  background: var(--black);
-  z-index: 9997;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.loader-text {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(3rem, 8vw, 6rem);
-  letter-spacing: 0.1em;
-  color: var(--accent);
-  overflow: hidden;
-}
-
-.loader-bar {
-  width: 200px; height: 1px;
-  background: var(--border);
-  position: relative;
-  overflow: hidden;
-}
-
-.loader-bar::after {
-  content: '';
-  position: absolute;
-  left: -100%; top: 0; bottom: 0;
-  width: 100%;
-  background: var(--accent);
-  animation: loaderBar 1.2s ease forwards;
-}
-
-@keyframes loaderBar {
-  from { left: -100%; }
-  to { left: 0%; }
-}
-
-/* ========== NAV ========== */
-nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 3rem;
-  mix-blend-mode: normal;
-}
-
-.nav-logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.2rem;
-  letter-spacing: 0.15em;
-  color: var(--white);
-  text-decoration: none;
-  opacity: 0;
-  animation: fadeDown 0.6s ease 1.8s forwards;
-}
-
-.nav-logo span { color: var(--accent); }
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  opacity: 0;
-  animation: fadeDown 0.6s ease 2s forwards;
-}
-
-.nav-right a {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.85rem;
-  color: var(--cream);
-  text-decoration: none;
-  letter-spacing: 0.1em;
-  opacity: 0.6;
-  transition: opacity 0.2s, color 0.2s;
-}
-
-.nav-right a:hover { opacity: 1; color: var(--accent); }
-
-.nav-switch {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  color: var(--cream);
-  text-decoration: none;
-  opacity: 0.6 !important;
-  transition: border-color 0.2s, opacity 0.2s !important;
-}
-
-.nav-switch:hover { border-color: var(--accent) !important; opacity: 1 !important; }
-
-/* ========== HERO ========== */
-.hero {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 3rem;
-  padding-bottom: 4rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-watermark {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(12rem, 32vw, 28rem);
-  color: rgba(255,255,255,0.018);
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
-  line-height: 1;
-  animation: watermarkDrift 20s ease-in-out infinite alternate;
-}
-
-@keyframes watermarkDrift {
-  from { transform: translate(-50%, -50%) scale(1); }
-  to { transform: translate(-48%, -52%) scale(1.03); }
-}
-
-.hero-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.9rem;
-  letter-spacing: 0.22em;
-  color: var(--accent);
-  margin-bottom: 1.5rem;
-  position: relative; z-index: 1;
-  opacity: 0;
-}
-
-.hero-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  position: relative;
-  z-index: 1;
-}
-
-/* ========== GLITCH TITLE ========== */
-.hero-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(5rem, 16vw, 14rem);
-  line-height: 0.85;
-  letter-spacing: -0.01em;
-  position: relative;
-  cursor: default;
-}
-
-.hero-title .char {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(80px) rotate(5deg);
-}
-
-.hero-title .outline {
-  -webkit-text-stroke: 1.5px var(--white);
-  color: transparent;
-}
-
-.hero-title:hover .char {
-  animation: glitchChar 0.3s ease forwards;
-}
-
-@keyframes glitchChar {
-  0% { transform: translateX(0); }
-  20% { transform: translateX(-3px) skewX(-5deg); color: var(--accent); }
-  40% { transform: translateX(3px) skewX(5deg); }
-  60% { transform: translateX(-2px); color: var(--white); }
-  80% { transform: translateX(2px); }
-  100% { transform: translateX(0); }
-}
-
-.hero-side {
-  text-align: right;
-  max-width: 280px;
-  padding-bottom: 0.5rem;
-  opacity: 0;
-}
-
-.hero-desc {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.95rem;
-  color: var(--cream);
-  opacity: 0.55;
-  line-height: 1.9;
-  margin-bottom: 1.5rem;
-}
-
-.btn-primary {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.95rem;
-  letter-spacing: 0.12em;
-  padding: 1rem 2.2rem;
-  background: var(--accent);
-  color: #080808;
-  border: none;
-  text-decoration: none;
-  font-weight: 500;
-  display: inline-block;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s;
-}
-
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.2);
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-}
-
-.btn-primary:hover::before { transform: translateX(100%); }
-.btn-primary:hover { transform: translate(-2px, -2px); }
-
-/* ========== SCROLL LINE ========== */
-.scroll-indicator {
-  position: absolute;
-  right: 3rem;
-  bottom: 4rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.8rem;
-  z-index: 1;
-  opacity: 0;
-  animation: fadeIn 0.8s ease 2.5s forwards;
-}
-
-.scroll-text {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  color: var(--muted);
-  writing-mode: vertical-rl;
-}
-
-.scroll-line {
-  width: 1px;
-  height: 60px;
-  background: var(--border);
-  position: relative;
-  overflow: hidden;
-}
-
-.scroll-line::after {
-  content: '';
-  position: absolute;
-  top: -100%;
-  left: 0; right: 0;
-  height: 100%;
-  background: var(--accent);
-  animation: scrollDrop 1.5s ease-in-out infinite;
-}
-
-@keyframes scrollDrop {
-  from { top: -100%; }
-  to { top: 100%; }
-}
-
-/* ========== SECTION COMMONS ========== */
-section { padding: 5rem 3rem; position: relative; z-index: 1; }
-
-.section-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.85rem;
-  letter-spacing: 0.25em;
-  color: var(--accent);
-  margin-bottom: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.section-label::after {
-  content: '';
-  display: block;
-  width: 40px; height: 1px;
-  background: var(--accent);
-}
-
-.section-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
-  line-height: 0.95;
-  margin-bottom: 2.5rem;
-  letter-spacing: 0.02em;
-  overflow: hidden;
-}
-
-/* ========== GALLERY — natural image sizes ========== */
-.gallery-masonry {
-  columns: 3;
-  column-gap: 12px;
-  margin-top: 2rem;
-}
-
-.gallery-item {
-  break-inside: avoid;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
-  background: #0d0d0d;
-  opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.7s ease, transform 0.7s ease, box-shadow 0.4s ease;
-  display: block;
-}
-
-.gallery-item.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.gallery-item img {
-  width: 100%;
-  height: auto;
-  display: block;
-  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.gallery-item:hover { box-shadow: 0 20px 60px rgba(200,241,53,0.08); }
-.gallery-item:hover img { transform: scale(1.04); }
-
-.gallery-item-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(7,7,7,0.8) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  display: flex;
-  align-items: flex-end;
-  padding: 1rem 1.2rem;
-}
-
-.gallery-item:hover .gallery-item-overlay { opacity: 1; }
-
-.gallery-item-num {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.1rem;
-  color: var(--accent);
-  letter-spacing: 0.15em;
-}
-
-/* Stagger delays */
-.gallery-item:nth-child(1) { transition-delay: 0.05s; }
-.gallery-item:nth-child(2) { transition-delay: 0.1s; }
-.gallery-item:nth-child(3) { transition-delay: 0.15s; }
-.gallery-item:nth-child(4) { transition-delay: 0.2s; }
-.gallery-item:nth-child(5) { transition-delay: 0.25s; }
-.gallery-item:nth-child(6) { transition-delay: 0.3s; }
-.gallery-item:nth-child(7) { transition-delay: 0.35s; }
-.gallery-item:nth-child(8) { transition-delay: 0.4s; }
-.gallery-item:nth-child(9) { transition-delay: 0.45s; }
-.gallery-item:nth-child(10) { transition-delay: 0.5s; }
-
-/* ========== MARQUEE between sections ========== */
-.marquee-strip {
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  overflow: hidden;
-  padding: 1rem 0;
-}
-
-.marquee-inner {
-  display: flex;
-  gap: 3rem;
-  animation: marquee 15s linear infinite;
-  white-space: nowrap;
-}
-
-.marquee-word {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1rem;
-  letter-spacing: 0.2em;
-  color: var(--muted);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.marquee-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
-
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-/* ========== COMMISSIONS ========== */
-.commission-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-}
-
-.commission-card {
-  background: var(--black);
-  padding: 2.5rem 2rem;
-  position: relative;
-  overflow: hidden;
-  transition: background 0.3s;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease, background 0.3s;
-}
-
-.commission-card.visible { opacity: 1; transform: translateY(0); }
-.commission-card:nth-child(2) { transition-delay: 0.15s; }
-.commission-card:nth-child(3) { transition-delay: 0.3s; }
-
-.commission-card:hover { background: #0e0e0e; }
-
-.commission-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s ease;
-}
-
-.commission-card:hover::before { transform: scaleX(1); }
-
-.commission-type {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.6rem;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.8rem;
-}
-
-.commission-desc {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.9rem;
-  color: var(--cream);
-  opacity: 0.5;
-  line-height: 1.8;
-  margin-bottom: 1.5rem;
-}
-
-.commission-price {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2rem;
-  color: var(--accent);
-  letter-spacing: 0.05em;
-}
-
-.commission-sub {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.6rem;
-  color: var(--muted);
-  letter-spacing: 0.12em;
-  margin-top: 0.3rem;
-}
-
-/* ========== CTA ========== */
-.cta-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 3rem;
-  border: 1px solid var(--border);
-  gap: 2rem;
-  position: relative;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-}
-
-.cta-bar.visible { opacity: 1; transform: translateY(0); }
-
-.cta-bar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(200,241,53,0.03) 0%, transparent 60%);
-  pointer-events: none;
-}
-
-.cta-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
-  line-height: 0.9;
-}
-
-.cta-title span { color: var(--accent); }
-
-.cta-actions { display: flex; gap: 1rem; flex-shrink: 0; }
-
-.btn-ghost {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.95rem;
-  letter-spacing: 0.12em;
-  padding: 1rem 2.2rem;
-  background: transparent;
-  color: var(--white);
-  border: 1px solid var(--border);
-  text-decoration: none;
-  transition: border-color 0.2s, color 0.2s;
-  display: inline-block;
-}
-
-.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-/* ========== FOOTER ========== */
-footer {
-  border-top: 1px solid var(--border);
-  padding: 1.5rem 3rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-footer p {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.8rem;
-  color: var(--muted);
-  letter-spacing: 0.1em;
-}
-
-/* ========== ANIMATIONS ========== */
-@keyframes fadeDown {
-  from { opacity: 0; transform: translateY(-15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* ========== RESPONSIVE ========== */
-@media (max-width: 900px) {
-  nav { padding: 1.2rem 1.5rem; }
-  .hero { padding: 1.5rem; padding-bottom: 3rem; }
-  .hero-bottom { flex-direction: column; align-items: flex-start; gap: 2rem; }
-  .hero-side { text-align: left; max-width: 100%; }
-  section { padding: 3.5rem 1.5rem; }
-  .gallery-masonry { columns: 2; }
-  .commission-grid { grid-template-columns: 1fr; }
-  .cta-bar { flex-direction: column; align-items: flex-start; padding: 2rem 1.5rem; }
-  footer { flex-direction: column; gap: 0.5rem; text-align: center; }
-  .scroll-indicator { display: none; }
-  body { cursor: auto; }
-  .cursor-dot, .cursor-ring { display: none; }
-}
-
-@media (max-width: 500px) {
-  .gallery-masonry { columns: 1; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050605">
+  <meta name="description" content="V3ylor is a Web3-native 2D character artist creating mascots, meme art, PFPs and launch visuals.">
+  <title>Veylor Art Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink: #050605;
+      --paper: #f2f1eb;
+      --acid: #b8ff38;
+      --muted: #9a9d94;
+      --line: rgba(255, 255, 255, 0.16);
+      --pointer-x: 50vw;
+      --pointer-y: 50vh;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--ink);
+    }
+
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: "Inter", Arial, Helvetica, sans-serif;
+    }
+
+    ::selection {
+      color: var(--ink);
+      background: var(--acid);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      pointer-events: none;
+      opacity: 0.065;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+    }
+
+    .pointer-light {
+      position: fixed;
+      z-index: 0;
+      width: 520px;
+      height: 520px;
+      left: var(--pointer-x);
+      top: var(--pointer-y);
+      translate: -50% -50%;
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(184, 255, 56, 0.08), transparent 68%);
+      filter: blur(8px);
+    }
+
+    .intro-curtain {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 18px;
+      color: var(--paper);
+      background: #050605;
+      animation: curtain-away 0.85s cubic-bezier(.77, 0, .18, 1) 1.35s forwards;
+    }
+
+    .intro-mark {
+      font-size: clamp(2rem, 7vw, 6rem);
+      font-weight: 900;
+      letter-spacing: -0.07em;
+      animation: intro-mark 0.8s cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    .intro-line {
+      width: min(280px, 48vw);
+      height: 2px;
+      overflow: hidden;
+      background: #20221d;
+    }
+
+    .intro-line span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      transform-origin: left;
+      background: var(--acid);
+      animation: intro-load 1.15s cubic-bezier(.65, 0, .35, 1) both;
+    }
+
+    .intro-curtain p {
+      margin: 0;
+      color: var(--muted);
+      font-family: "DM Mono", monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+    }
+
+    .site-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      width: 100%;
+      padding: 24px 32px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      transition: padding .3s ease, background .3s ease, backdrop-filter .3s ease;
+      animation: header-in 0.8s ease 1.75s both;
+    }
+
+    .site-header.scrolled {
+      padding-block: 17px;
+      background: rgba(5, 6, 5, .72);
+      backdrop-filter: blur(18px);
+    }
+
+    .wordmark {
+      width: max-content;
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+    }
+
+    .wordmark span {
+      color: var(--acid);
+    }
+
+    .site-header nav {
+      display: flex;
+      gap: 34px;
+      color: #c8cac3;
+      font-family: "DM Mono", monospace;
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .site-header nav a {
+      transition: color 0.25s ease;
+    }
+
+    .site-header nav a:hover {
+      color: var(--acid);
+    }
+
+    .header-cta {
+      display: flex;
+      align-items: center;
+      justify-self: end;
+      gap: 10px;
+      font-family: "DM Mono", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--acid);
+      box-shadow: 0 0 16px var(--acid);
+      animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+
+    .hero {
+      --hero-progress: 0;
+      position: relative;
+      z-index: 1;
+      min-height: 100svh;
+      overflow: hidden;
+      isolation: isolate;
+      padding: 112px 5vw 42px;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(88, 130, 19, 0.22), transparent 28%),
+        linear-gradient(180deg, #070907 0%, #050605 72%);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      opacity: 0.22;
+      background-image:
+        linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+      background-size: 8vw 8vw;
+      mask-image: radial-gradient(circle at 50% 50%, black, transparent 78%);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      z-index: 8;
+      height: 18vh;
+      pointer-events: none;
+      background: linear-gradient(transparent, var(--ink));
+    }
+
+    .hero-orbit {
+      position: absolute;
+      z-index: -1;
+      left: 50%;
+      top: 49%;
+      border: 1px solid rgba(184, 255, 56, 0.16);
+      border-radius: 50%;
+      translate: -50% -50%;
+      animation: orbit-spin 28s linear infinite;
+    }
+
+    .orbit-one {
+      width: min(62vw, 880px);
+      aspect-ratio: 1;
+    }
+
+    .orbit-two {
+      width: min(42vw, 590px);
+      aspect-ratio: 1;
+      animation-direction: reverse;
+      animation-duration: 20s;
+    }
+
+    .hero-orbit::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--acid);
+      box-shadow: 0 0 20px var(--acid);
+    }
+
+    .hero-kicker {
+      position: absolute;
+      top: 18%;
+      left: 5vw;
+      right: 5vw;
+      display: flex;
+      justify-content: space-between;
+      color: #9da095;
+      font-family: "DM Mono", monospace;
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      animation: hero-fade 0.9s ease 1.8s both;
+    }
+
+    .hero-title {
+      position: absolute;
+      z-index: 4;
+      inset: 47% 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      translate: 0 calc(-50% + var(--hero-progress) * -60px);
+      color: #f4f3ed;
+      font-size: clamp(8rem, 22vw, 22rem);
+      font-weight: 900;
+      line-height: 0.68;
+      letter-spacing: -0.095em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+
+    .title-top,
+    .title-bottom {
+      display: block;
+      animation: title-in 1.15s cubic-bezier(.16, 1, .3, 1) 1.45s both;
+    }
+
+    .title-bottom {
+      color: var(--acid);
+      animation-delay: 1.55s;
+    }
+
+    .hero-art {
+      position: absolute;
+      z-index: 2;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: #111;
+      box-shadow: 0 34px 100px rgba(0, 0, 0, 0.52);
+      animation: art-card-in 1.15s cubic-bezier(.16, 1, .3, 1) 1.65s both;
+    }
+
+    .hero-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-art-left {
+      left: 11vw;
+      top: calc(35% + var(--hero-progress) * 100px);
+      width: clamp(150px, 18vw, 310px);
+      aspect-ratio: 0.83;
+      rotate: -9deg;
+    }
+
+    .hero-art-center {
+      left: 50%;
+      top: calc(22% + var(--hero-progress) * 50px);
+      width: clamp(220px, 26vw, 450px);
+      aspect-ratio: 1;
+      translate: -50% 0;
+    }
+
+    .hero-art-right {
+      right: 10vw;
+      top: calc(37% + var(--hero-progress) * 130px);
+      width: clamp(145px, 17vw, 290px);
+      aspect-ratio: 0.82;
+      rotate: 8deg;
+    }
+
+    .hero-bottom {
+      position: absolute;
+      z-index: 10;
+      left: 5vw;
+      right: 5vw;
+      bottom: 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      animation: hero-fade 0.9s ease 2s both;
+    }
+
+    .hero-bottom p {
+      max-width: 410px;
+      margin: 0;
+      color: #b8bbb0;
+      font-size: clamp(0.86rem, 1.05vw, 1rem);
+      line-height: 1.55;
+    }
+
+    .primary-cta {
+      display: flex;
+      align-items: center;
+      gap: 42px;
+      padding: 8px 8px 8px 24px;
+      border-radius: 100px;
+      color: var(--ink);
+      background: var(--acid);
+      font-family: "DM Mono", monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: transform .28s ease, box-shadow .28s ease;
+    }
+
+    .primary-cta:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 45px rgba(184, 255, 56, 0.22);
+    }
+
+    .cta-arrow {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      color: var(--paper);
+      background: var(--ink);
+      font-size: 1.1rem;
+    }
+
+    .scroll-cue {
+      position: absolute;
+      z-index: 10;
+      left: 50%;
+      bottom: 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      translate: -50% 0;
+      color: #7d8076;
+      font-family: "DM Mono", monospace;
+      font-size: 0.55rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .scroll-cue i {
+      width: 1px;
+      height: 32px;
+      overflow: hidden;
+      background: #363a31;
+    }
+
+    .scroll-cue i::after {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 55%;
+      background: var(--acid);
+      animation: scroll-line 1.5s ease-in-out infinite;
+    }
+
+    .marquee {
+      position: relative;
+      z-index: 3;
+      overflow: hidden;
+      border-block: 1px solid var(--line);
+      color: var(--ink);
+      background: var(--acid);
+      rotate: -1.2deg;
+      scale: 1.02;
+    }
+
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee 24s linear infinite;
+    }
+
+    .marquee-copy {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      padding: 18px 15px;
+      font-family: "DM Mono", monospace;
+      font-size: 0.77rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+    }
+
+    .marquee-copy b {
+      font-size: 0.85rem;
+    }
+
+    .statement {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 18vh 7vw 10vh;
+      border-bottom: 1px solid var(--line);
+      background: var(--ink);
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--acid);
+      font-family: "DM Mono", monospace;
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    .statement h2 {
+      max-width: 1220px;
+      margin: 8vh 0 0;
+      color: #dbddd6;
+      font-size: clamp(3rem, 7.8vw, 8.5rem);
+      font-weight: 700;
+      line-height: 0.93;
+      letter-spacing: -0.065em;
+    }
+
+    .statement h2 em,
+    .commission-copy h2 em {
+      color: var(--acid);
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+
+    .statement h2 span {
+      display: block;
+      color: #676a62;
+    }
+
+    .statement-meta {
+      display: flex;
+      justify-content: flex-end;
+      gap: 42px;
+      margin-top: 9vh;
+      color: #84877e;
+      font-family: "DM Mono", monospace;
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.13em;
+    }
+
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(42px);
+      transition: opacity .9s cubic-bezier(.16, 1, .3, 1), transform .9s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    [data-reveal].is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .work-section {
+      --gallery-progress: 0%;
+      position: relative;
+      z-index: 2;
+      height: 520vh;
+      background: #0a0b09;
+    }
+
+    .work-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      padding: 4.8vh 0 4vh 5vw;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .work-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 24vh;
+      padding-right: 5vw;
+    }
+
+    .work-heading h2 {
+      margin: 1.7vh 0 0;
+      font-size: clamp(3.2rem, 8vw, 7.5rem);
+      line-height: 0.72;
+      letter-spacing: -0.07em;
+    }
+
+    .work-count {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin: 0;
+      color: #b9bbb4;
+      font-family: "DM Mono", monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-align: right;
+    }
+
+    .work-count span {
+      color: #5e6159;
+      font-size: 0.52rem;
+    }
+
+    .work-track {
+      display: flex;
+      align-items: flex-start;
+      gap: 3.2vw;
+      width: max-content;
+      padding: 4.4vh 5vw 0 0;
+      will-change: transform;
+    }
+
+    .art-card {
+      flex: 0 0 auto;
+      width: min(29vw, 430px);
+      margin: 0;
+    }
+
+    .art-card.card-2 {
+      width: min(23vw, 350px);
+      padding-top: 6vh;
+    }
+
+    .art-card.card-3 {
+      width: min(26vw, 390px);
+      padding-top: 1.5vh;
+    }
+
+    .art-image {
+      position: relative;
+      display: block;
+      width: 100%;
+      padding: 0;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border: 0;
+      background: #141511;
+      cursor: zoom-in;
+    }
+
+    .art-image::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(255,255,255,.16);
+      pointer-events: none;
+    }
+
+    .art-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(.92) contrast(1.04);
+      transition: transform .7s cubic-bezier(.16, 1, .3, 1), filter .5s ease;
+    }
+
+    .art-card:hover img {
+      transform: scale(1.045);
+      filter: saturate(1.1) contrast(1.04);
+    }
+
+    .view-label {
+      position: absolute;
+      z-index: 2;
+      right: 16px;
+      bottom: 16px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: var(--acid);
+      font-family: "DM Mono", monospace;
+      font-size: 0.48rem;
+      font-weight: 500;
+      letter-spacing: 0.11em;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: .3s ease;
+    }
+
+    .art-card:hover .view-label {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .art-card figcaption {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 13px;
+      color: #9a9d94;
+      font-family: "DM Mono", monospace;
+      font-size: 0.58rem;
+      font-weight: 500;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .work-progress {
+      position: absolute;
+      left: 5vw;
+      right: 5vw;
+      bottom: 3.5vh;
+      height: 1px;
+      background: #242620;
+    }
+
+    .work-progress span {
+      display: block;
+      width: var(--gallery-progress);
+      height: 100%;
+      background: var(--acid);
+    }
+
+    .services {
+      position: relative;
+      z-index: 2;
+      padding: 16vh 7vw 18vh;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .services .eyebrow {
+      color: #557d0e;
+    }
+
+    .services-head {
+      display: grid;
+      grid-template-columns: .6fr 1.4fr;
+      column-gap: 7vw;
+    }
+
+    .services-head h2 {
+      grid-column: 2;
+      margin: 0;
+      font-size: clamp(4rem, 8.8vw, 9.8rem);
+      line-height: .78;
+      letter-spacing: -.075em;
+    }
+
+    .services-head h2 em {
+      color: #628d14;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+
+    .services-head > p:last-child {
+      grid-column: 2;
+      max-width: 530px;
+      margin: 5vh 0 10vh;
+      color: #5d6058;
+      font-size: clamp(.95rem, 1.3vw, 1.15rem);
+      line-height: 1.6;
+    }
+
+    .service-list {
+      border-top: 1px solid rgba(5, 6, 5, .28);
+    }
+
+    .service-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: .28fr 1fr 1fr 50px;
+      align-items: center;
+      gap: 3vw;
+      min-height: 150px;
+      border-bottom: 1px solid rgba(5, 6, 5, .28);
+      isolation: isolate;
+    }
+
+    .service-row::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: var(--acid);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform .45s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .service-row:hover::before {
+      transform: scaleY(1);
+    }
+
+    .service-no {
+      font-family: "DM Mono", monospace;
+      font-size: .6rem;
+      font-weight: 500;
+      letter-spacing: .16em;
+    }
+
+    .service-row h3 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3.2vw, 3.7rem);
+      line-height: .9;
+      letter-spacing: -.045em;
+    }
+
+    .service-row p {
+      max-width: 430px;
+      margin: 0;
+      color: #62645d;
+      font-size: .8rem;
+      line-height: 1.55;
+      transition: color .25s ease;
+    }
+
+    .service-row:hover p {
+      color: #31332e;
+    }
+
+    .service-arrow {
+      justify-self: end;
+      font-size: 1.6rem;
+      transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .service-row:hover .service-arrow {
+      transform: rotate(42deg);
+    }
+
+    .service-thumb {
+      position: absolute;
+      z-index: 3;
+      right: 8%;
+      bottom: 66%;
+      width: 170px;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border: 8px solid var(--paper);
+      opacity: 0;
+      rotate: 6deg;
+      transform: translateY(30px) scale(.82);
+      pointer-events: none;
+      transition: opacity .3s ease, transform .48s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .service-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .service-row:hover .service-thumb {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .commission {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: 9vw;
+      min-height: 100vh;
+      align-items: center;
+      padding: 12vh 7vw;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 50%, rgba(184,255,56,.11), transparent 28%),
+        var(--ink);
+    }
+
+    .commission-art {
+      position: relative;
+      max-width: 470px;
+      margin: auto;
+      rotate: -4deg;
+    }
+
+    .commission-art::before {
+      content: "";
+      position: absolute;
+      inset: -18px;
+      z-index: -1;
+      border: 1px solid rgba(184,255,56,.35);
+    }
+
+    .commission-art img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      filter: grayscale(.15) contrast(1.05);
+    }
+
+    .commission-art span {
+      position: absolute;
+      right: -25px;
+      bottom: 25px;
+      padding: 11px 15px;
+      color: var(--ink);
+      background: var(--acid);
+      font-family: "DM Mono", monospace;
+      font-size: 0.58rem;
+      font-weight: 500;
+      letter-spacing: .12em;
+      white-space: nowrap;
+    }
+
+    .commission-copy h2 {
+      margin: 4vh 0;
+      font-size: clamp(4rem, 8.5vw, 9rem);
+      line-height: .77;
+      letter-spacing: -.075em;
+    }
+
+    .commission-copy > p:not(.eyebrow) {
+      max-width: 520px;
+      color: #9da097;
+      font-size: clamp(.95rem, 1.3vw, 1.2rem);
+      line-height: 1.6;
+    }
+
+    .giant-cta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 620px;
+      margin-top: 7vh;
+      padding: 22px 10px 22px 26px;
+      border-top: 1px solid rgba(255,255,255,.32);
+      border-bottom: 1px solid rgba(255,255,255,.32);
+      font-family: "DM Mono", monospace;
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: .12em;
+      transition: color .3s ease, border-color .3s ease;
+    }
+
+    .giant-cta b {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      color: var(--ink);
+      background: var(--acid);
+      font-size: 1.2rem;
+      transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .giant-cta:hover {
+      color: var(--acid);
+      border-color: var(--acid);
+    }
+
+    .giant-cta:hover b {
+      transform: rotate(42deg);
+    }
+
+    footer {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 28px 32px;
+      border-top: 1px solid var(--line);
+      color: #65685f;
+      background: var(--ink);
+      font-family: "DM Mono", monospace;
+      font-size: .55rem;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    footer p {
+      margin: 0;
+    }
+
+    footer p:last-child {
+      justify-self: end;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      padding: 6vh 7vw;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(2, 3, 2, .94);
+      backdrop-filter: blur(16px);
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+
+    .lightbox.is-open {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lightbox::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .18;
+      background-image:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 8vw 8vw;
+      pointer-events: none;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      z-index: 2;
+      top: 26px;
+      right: 30px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0;
+      border: 0;
+      color: #c8cac3;
+      background: transparent;
+      font-family: "DM Mono", monospace;
+      font-size: .58rem;
+      font-weight: 500;
+      letter-spacing: .15em;
+      cursor: pointer;
+    }
+
+    .lightbox-close span {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      font-size: 1.2rem;
+    }
+
+    .lightbox-inner {
+      position: relative;
+      z-index: 1;
+      width: min(78vw, 820px);
+    }
+
+    .lightbox.is-open .lightbox-inner {
+      animation: lightbox-art .55s cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    .lightbox-image {
+      width: min(66vh, 700px);
+      margin: auto;
+      aspect-ratio: 1;
+      overflow: hidden;
+      box-shadow: 0 35px 100px #000;
+    }
+
+    .lightbox-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #0b0c0a;
+    }
+
+    .lightbox-info {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      align-items: center;
+      gap: 24px;
+      padding-top: 18px;
+      color: #9a9d94;
+      font-family: "DM Mono", monospace;
+      font-size: .58rem;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .lightbox-piece,
+    .lightbox-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .lightbox-nav button {
+      padding: 0;
+      border: 0;
+      color: var(--paper);
+      background: transparent;
+      font-family: "DM Mono", monospace;
+      font-size: .58rem;
+      font-weight: 500;
+      letter-spacing: .12em;
+      cursor: pointer;
+    }
+
+    .lightbox-nav button:hover {
+      color: var(--acid);
+    }
+
+    @keyframes intro-load {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    @keyframes intro-mark {
+      from { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    @keyframes curtain-away {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-105%); visibility: hidden; }
+    }
+
+    @keyframes header-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes title-in {
+      from { opacity: 0; transform: translateY(90px); filter: blur(10px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    @keyframes hero-fade {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes art-card-in {
+      from { opacity: 0; transform: translateY(80px) scale(.86); filter: blur(12px); }
+      to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
+    @keyframes orbit-spin {
+      to { rotate: 360deg; }
+    }
+
+    @keyframes pulse-dot {
+      50% { opacity: .4; transform: scale(.72); }
+    }
+
+    @keyframes scroll-line {
+      0% { transform: translateY(-110%); }
+      100% { transform: translateY(210%); }
+    }
+
+    @keyframes marquee {
+      to { transform: translateX(-50%); }
+    }
+
+    @keyframes lightbox-art {
+      from { opacity: 0; transform: scale(.9) rotate(-2deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    @media (max-width: 799px) {
+      .pointer-light { display: none; }
+
+      .site-header {
+        grid-template-columns: 1fr 1fr;
+        padding: 20px;
+      }
+
+      .site-header.scrolled { padding-block: 15px; }
+      .site-header nav { display: none; }
+      .header-cta { font-size: .6rem; }
+
+      .hero {
+        min-height: 830px;
+        padding: 96px 20px 28px;
+      }
+
+      .hero::before { background-size: 22vw 22vw; }
+
+      .hero-kicker {
+        top: 14%;
+        left: 20px;
+        right: 20px;
+        font-size: .48rem;
+      }
+
+      .orbit-one { width: 125vw; }
+      .orbit-two { width: 88vw; }
+
+      .hero-title {
+        inset: 47% 0 auto;
+        flex-direction: column;
+        font-size: clamp(7rem, 38vw, 12rem);
+        line-height: .63;
+      }
+
+      .hero-art-center {
+        top: 25%;
+        width: 56vw;
+      }
+
+      .hero-art-left {
+        left: -6vw;
+        top: 41%;
+        width: 40vw;
+      }
+
+      .hero-art-right {
+        right: -7vw;
+        top: 43%;
+        width: 40vw;
+      }
+
+      .hero-bottom {
+        left: 20px;
+        right: 20px;
+        bottom: 28px;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 22px;
+      }
+
+      .hero-bottom p { max-width: 300px; }
+      .primary-cta { align-self: flex-end; }
+      .scroll-cue { display: none; }
+
+      .statement {
+        min-height: auto;
+        padding: 18vh 20px 13vh;
+      }
+
+      .statement h2 {
+        margin-top: 6vh;
+        font-size: clamp(3.1rem, 15vw, 5.5rem);
+      }
+
+      .statement-meta {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 16px 24px;
+        margin-top: 7vh;
+      }
+
+      .work-section {
+        height: auto;
+        padding: 0 20px;
+      }
+
+      .work-sticky {
+        position: relative;
+        height: auto;
+        overflow: visible;
+        padding: 11vh 0;
+      }
+
+      .work-heading {
+        height: auto;
+        padding: 0;
+      }
+
+      .work-heading h2 { line-height: .78; }
+      .work-count { display: none; }
+
+      .work-track {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 34px 14px;
+        width: 100%;
+        padding: 8vh 0 0;
+        transform: none !important;
+      }
+
+      .art-card,
+      .art-card.card-2,
+      .art-card.card-3 {
+        width: 100%;
+        padding: 0;
+      }
+
+      .art-card:nth-child(3n + 2) { transform: translateY(28px); }
+      .view-label { display: none; }
+      .work-progress { display: none; }
+
+      .services {
+        padding: 14vh 20px;
+      }
+
+      .services-head {
+        display: block;
+      }
+
+      .services-head h2 {
+        margin-top: 4vh;
+        font-size: clamp(3.8rem, 17vw, 6rem);
+      }
+
+      .services-head > p:last-child {
+        margin: 5vh 0 8vh;
+      }
+
+      .service-row {
+        grid-template-columns: 45px 1fr 32px;
+        gap: 12px;
+        min-height: 110px;
+      }
+
+      .service-row p,
+      .service-thumb {
+        display: none;
+      }
+
+      .service-row h3 {
+        font-size: clamp(1.7rem, 8vw, 2.8rem);
+      }
+
+      .commission {
+        grid-template-columns: 1fr;
+        gap: 12vh;
+        padding: 14vh 20px 10vh;
+      }
+
+      .commission-art {
+        width: min(72vw, 370px);
+      }
+
+      .commission-copy h2 {
+        font-size: clamp(4rem, 20vw, 7rem);
+      }
+
+      .lightbox {
+        padding: 9vh 20px 5vh;
+      }
+
+      .lightbox-close {
+        top: 18px;
+        right: 20px;
+      }
+
+      .lightbox-inner {
+        width: 100%;
+      }
+
+      .lightbox-image {
+        width: 100%;
+        max-height: 68vh;
+      }
+
+      .lightbox-info {
+        grid-template-columns: 1fr;
+      }
+
+      footer {
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        padding: 24px 20px;
+      }
+
+      footer p:nth-child(2) { display: none; }
+    }
+
+    @media (max-width: 430px) {
+      .hero { min-height: 760px; }
+      .hero-bottom p { max-width: 250px; font-size: .78rem; }
+      .primary-cta { gap: 26px; padding-left: 18px; }
+      .cta-arrow { width: 40px; height: 40px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+
+      .intro-curtain { display: none; }
+      [data-reveal] { opacity: 1; transform: none; }
+    }
+  </style>
 </head>
+
 <body>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="pointer-light" aria-hidden="true"></div>
 
-<!-- Loader -->
-<div class="loader" id="loader">
-  <div class="loader-text" id="loaderText">V3YLOR</div>
-  <div class="loader-bar"></div>
-</div>
-
-<!-- Cursor -->
-<div class="cursor-dot" id="cursorDot"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-
-<!-- Background orbs -->
-<div class="orb orb1"></div>
-<div class="orb orb2"></div>
-
-<nav>
-  <a href="index.html" class="nav-logo">VEYLOR<span>.</span>STUDIO</a>
-  <div class="nav-right">
-    <a href="#gallery">GALLERY</a>
-    <a href="#commissions">COMMISSIONS</a>
-    <a href="#contact">HIRE ME</a>
-    <a href="dev.html" class="nav-switch">VIEW SITES →</a>
+  <div class="intro-curtain" aria-hidden="true">
+    <div class="intro-mark">V3YLOR</div>
+    <div class="intro-line"><span></span></div>
+    <p>Art made to move culture.</p>
   </div>
-</nav>
 
-<!-- Hero -->
-<section class="hero">
-  
+  <header class="site-header" id="siteHeader">
+    <a class="wordmark" href="#top" aria-label="V3ylor home">V<span>3</span>YLOR</a>
+    <nav aria-label="Main navigation">
+      <a href="#work">Work</a>
+      <a href="#services">Services</a>
+      <a href="#commission">Commission</a>
+    </nav>
+    <a class="header-cta" href="https://x.com/v3ylor" target="_blank" rel="noreferrer">
+      <span class="status-dot"></span> DM on X <span aria-hidden="true">↗</span>
+    </a>
+  </header>
 
-  <div class="hero-label" id="heroLabel">2D CHARACTER ARTIST — WEB3 NATIVE</div>
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-orbit orbit-one" aria-hidden="true"></div>
+      <div class="hero-orbit orbit-two" aria-hidden="true"></div>
 
-  <div class="hero-bottom">
-    <div>
-      <div style="display:flex; align-items:center; gap:1.2rem; margin-bottom:1.5rem; opacity:0;" id="heroPfp">
-        <div style="width:72px; height:72px; border-radius:50%; border:2px solid var(--accent); overflow:hidden; background:#111; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-          <img src="veylor.jpg" alt="Veylor" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\'font-family:Bebas Neue,sans-serif;font-size:1.3rem;color:var(--accent)\'>VY</span>'">
+      <div class="hero-kicker">
+        <span>2D CHARACTER ARTIST</span>
+        <span>WEB3 NATIVE</span>
+      </div>
+
+      <div class="hero-art hero-art-left" aria-hidden="true">
+        <img src="meme5.jpg" alt="">
+      </div>
+      <div class="hero-art hero-art-center" aria-hidden="true">
+        <img src="meme2.jpg" alt="">
+      </div>
+      <div class="hero-art hero-art-right" aria-hidden="true">
+        <img src="meme12.jpg" alt="">
+      </div>
+
+      <div class="hero-title" aria-label="V3ylor">
+        <span class="title-top">V3Y</span>
+        <span class="title-bottom">LOR</span>
+      </div>
+
+      <div class="hero-bottom">
+        <p>Meme characters, mascots, PFPs and campaign art that make Web3 projects impossible to scroll past.</p>
+        <a class="primary-cta" href="https://x.com/v3ylor" target="_blank" rel="noreferrer">
+          <span>Start a project</span>
+          <span class="cta-arrow" aria-hidden="true">↗</span>
+        </a>
+      </div>
+
+      <a class="scroll-cue" href="#statement" aria-label="Scroll to selected work">
+        <span>Scroll to enter</span>
+        <i aria-hidden="true"></i>
+      </a>
+    </section>
+
+    <div class="marquee" aria-label="V3ylor services">
+      <div class="marquee-track">
+        <div class="marquee-copy">
+          <span>CHARACTER ART</span><b>✦</b>
+          <span>MEME CULTURE</span><b>✦</b>
+          <span>PFP DESIGN</span><b>✦</b>
+          <span>LAUNCH VISUALS</span><b>✦</b>
         </div>
-        <div>
-          <div style="font-family:'DM Mono',monospace; font-size:0.68rem; letter-spacing:0.15em; color:var(--accent); margin-bottom:2px;">@v3ylor</div>
-          <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--cream); opacity:0.45;">2D Character Artist</div>
+        <div class="marquee-copy" aria-hidden="true">
+          <span>CHARACTER ART</span><b>✦</b>
+          <span>MEME CULTURE</span><b>✦</b>
+          <span>PFP DESIGN</span><b>✦</b>
+          <span>LAUNCH VISUALS</span><b>✦</b>
         </div>
       </div>
-      <h1 class="hero-title" id="heroTitle">
-        <span class="char">V</span><span class="char">3</span><span class="char">Y</span><br>
-        <span class="outline"><span class="char">L</span><span class="char">O</span><span class="char">R</span></span>
-      </h1>
     </div>
-    <div class="hero-side" id="heroSide">
-      <p class="hero-desc">
-        Meme characters, mascots, pfps, banners.<br>
-        Art that makes your Solana project<br>
-        impossible to scroll past.
-      </p>
-      <a href="#contact" class="btn-primary">COMMISSION NOW</a>
+
+    <section class="statement" id="statement">
+      <p class="eyebrow" data-reveal>THE WORK</p>
+      <h2 data-reveal>
+        Your project has one second to <em>stop the scroll.</em>
+        <span>I draw for that second.</span>
+      </h2>
+      <div class="statement-meta" data-reveal>
+        <span>100+ ARTWORKS</span>
+        <span>SOLANA NATIVE</span>
+        <span>FAST DELIVERY</span>
+      </div>
+    </section>
+
+    <section class="work-section" id="work">
+      <div class="work-sticky">
+        <div class="work-heading">
+          <div>
+            <p class="eyebrow">SELECTED WORK / 2025—26</p>
+            <h2>THE<br>ARCHIVE.</h2>
+          </div>
+          <p class="work-count">12 PIECES <span>DRAGGED THROUGH CULTURE</span></p>
+        </div>
+
+        <div class="work-track" id="workTrack">
+          <figure class="art-card card-1">
+            <button class="art-image" type="button" data-art-index="0" aria-label="Open Campaign Art 01">
+              <img src="meme1.jpg" alt="Campaign Art by V3ylor" loading="eager">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Campaign Art</span><span>/01</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-2">
+            <button class="art-image" type="button" data-art-index="1" aria-label="Open Character Design 02">
+              <img src="meme2.jpg" alt="Character Design by V3ylor" loading="eager">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Character Design</span><span>/02</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-3">
+            <button class="art-image" type="button" data-art-index="2" aria-label="Open Launch Visual 03">
+              <img src="meme3.jpg" alt="Launch Visual by V3ylor" loading="eager">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Launch Visual</span><span>/03</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-1">
+            <button class="art-image" type="button" data-art-index="3" aria-label="Open Meme Art 04">
+              <img src="meme4.jpg" alt="Meme Art by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Meme Art</span><span>/04</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-2">
+            <button class="art-image" type="button" data-art-index="4" aria-label="Open PFP Art 05">
+              <img src="meme5.jpg" alt="PFP Art by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>PFP Art</span><span>/05</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-3">
+            <button class="art-image" type="button" data-art-index="5" aria-label="Open Story Piece 06">
+              <img src="meme6.jpg" alt="Story Piece by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Story Piece</span><span>/06</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-1">
+            <button class="art-image" type="button" data-art-index="6" aria-label="Open Character Scene 07">
+              <img src="meme7.jpg" alt="Character Scene by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Character Scene</span><span>/07</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-2">
+            <button class="art-image" type="button" data-art-index="7" aria-label="Open Meme Art 08">
+              <img src="meme8.jpg" alt="Meme Art by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Meme Art</span><span>/08</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-3">
+            <button class="art-image" type="button" data-art-index="8" aria-label="Open Campaign Art 09">
+              <img src="meme9.jpg" alt="Campaign Art by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Campaign Art</span><span>/09</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-1">
+            <button class="art-image" type="button" data-art-index="9" aria-label="Open Community Art 10">
+              <img src="meme10.jpg" alt="Community Art by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Community Art</span><span>/10</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-2">
+            <button class="art-image" type="button" data-art-index="10" aria-label="Open Launch Visual 11">
+              <img src="meme11.jpg" alt="Launch Visual by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Launch Visual</span><span>/11</span></figcaption>
+          </figure>
+
+          <figure class="art-card card-3">
+            <button class="art-image" type="button" data-art-index="11" aria-label="Open Character Art 12">
+              <img src="meme12.jpg" alt="Character Art by V3ylor" loading="lazy">
+              <span class="view-label">VIEW PIECE</span>
+            </button>
+            <figcaption><span>Character Art</span><span>/12</span></figcaption>
+          </figure>
+        </div>
+
+        <div class="work-progress" aria-hidden="true"><span></span></div>
+      </div>
+    </section>
+
+    <section class="services" id="services">
+      <div class="services-head">
+        <p class="eyebrow" data-reveal>WHAT I DRAW</p>
+        <h2 data-reveal>BUILT FOR THE<br><em>WHOLE LAUNCH.</em></h2>
+        <p data-reveal>From the character people rally around to the content that keeps the timeline moving.</p>
+      </div>
+
+      <div class="service-list">
+        <article class="service-row" data-reveal>
+          <span class="service-no">/01</span>
+          <h3>Main Character</h3>
+          <p>An original mascot with a look, attitude and silhouette your community can own.</p>
+          <div class="service-thumb" aria-hidden="true"><img src="meme9.jpg" alt="" loading="lazy"></div>
+          <span class="service-arrow" aria-hidden="true">↗</span>
+        </article>
+
+        <article class="service-row" data-reveal>
+          <span class="service-no">/02</span>
+          <h3>Meme &amp; Campaign Art</h3>
+          <p>Scroll-stopping scenes made for announcements, timelines and the daily content cycle.</p>
+          <div class="service-thumb" aria-hidden="true"><img src="meme12.jpg" alt="" loading="lazy"></div>
+          <span class="service-arrow" aria-hidden="true">↗</span>
+        </article>
+
+        <article class="service-row" data-reveal>
+          <span class="service-no">/03</span>
+          <h3>PFPs &amp; Banners</h3>
+          <p>Profile art and social headers that make every project touchpoint feel connected.</p>
+          <div class="service-thumb" aria-hidden="true"><img src="meme2.jpg" alt="" loading="lazy"></div>
+          <span class="service-arrow" aria-hidden="true">↗</span>
+        </article>
+
+        <article class="service-row" data-reveal>
+          <span class="service-no">/04</span>
+          <h3>Art Packs &amp; Batches</h3>
+          <p>Consistent launch packs and ongoing batches for teams that need more than one post.</p>
+          <div class="service-thumb" aria-hidden="true"><img src="meme7.jpg" alt="" loading="lazy"></div>
+          <span class="service-arrow" aria-hidden="true">↗</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="commission" id="commission">
+      <div class="commission-art" data-reveal>
+        <img src="veylor.jpg" alt="V3ylor artist portrait">
+        <span>AVAILABLE FOR SELECT PROJECTS</span>
+      </div>
+
+      <div class="commission-copy">
+        <p class="eyebrow" data-reveal>OPEN FOR COMMISSIONS</p>
+        <h2 data-reveal>LET'S MAKE<br>THEM <em>LOOK.</em></h2>
+        <p data-reveal>Need a character people remember or a full art pack for launch? Tell me what you're building.</p>
+        <a class="giant-cta" href="https://x.com/v3ylor" target="_blank" rel="noreferrer" data-reveal>
+          <span>DM @V3YLOR ON X</span>
+          <b aria-hidden="true">↗</b>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a class="wordmark" href="#top">V<span>3</span>YLOR</a>
+    <p>2D CHARACTER ARTIST — WEB3 NATIVE</p>
+    <p>© 2026 VEYLOR STUDIO</p>
+  </footer>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Artwork viewer" aria-hidden="true" inert>
+    <button class="lightbox-close" id="lightboxClose" type="button">
+      CLOSE <span aria-hidden="true">×</span>
+    </button>
+
+    <div class="lightbox-inner">
+      <div class="lightbox-image">
+        <img id="lightboxImage" src="meme1.jpg" alt="Campaign Art by V3ylor">
+      </div>
+
+      <div class="lightbox-info">
+        <div class="lightbox-piece">
+          <span id="lightboxLabel">Campaign Art</span>
+          <span id="lightboxNumber">/01</span>
+        </div>
+
+        <div class="lightbox-nav">
+          <button type="button" id="lightboxPrev" aria-label="Previous artwork">← PREV</button>
+          <span id="lightboxCounter">01 / 12</span>
+          <button type="button" id="lightboxNext" aria-label="Next artwork">NEXT →</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="scroll-indicator">
-    <div class="scroll-text">SCROLL</div>
-    <div class="scroll-line"></div>
-  </div>
-</section>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var header = document.getElementById("siteHeader");
+      var hero = document.getElementById("top");
+      var gallery = document.getElementById("work");
+      var track = document.getElementById("workTrack");
+      var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      var desktop = window.matchMedia("(min-width: 800px)");
+      var frame = 0;
 
-<!-- Marquee -->
-<div class="marquee-strip">
-  <div class="marquee-inner">
-    <span class="marquee-word"><span class="marquee-dot"></span>2D CHARACTER ART</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>MEME CHARACTERS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>PFP COLLECTIONS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>MASCOT DESIGN</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>WEB3 NATIVE</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>BANNERS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>BATCH ORDERS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>2D CHARACTER ART</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>MEME CHARACTERS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>PFP COLLECTIONS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>MASCOT DESIGN</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>WEB3 NATIVE</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>BANNERS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>BATCH ORDERS</span>
-  </div>
-</div>
+      function updateScroll() {
+        frame = 0;
+        header.classList.toggle("scrolled", window.scrollY > 40);
 
-<!-- Gallery -->
-<section id="gallery">
-  <div class="section-label">2D ART</div>
-  <h2 class="section-title">GALLERY</h2>
+        if (hero && !reducedMotion.matches) {
+          var heroProgress = Math.min(Math.max(window.scrollY / hero.offsetHeight, 0), 1);
+          hero.style.setProperty("--hero-progress", heroProgress.toFixed(3));
+        }
 
-  <div class="gallery-masonry" id="galleryGrid">
-    <div class="gallery-item">
-      <img src="meme1.jpg" alt="Art 1" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">01</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme2.jpg" alt="Art 2" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">02</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme3.jpg" alt="Art 3" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">03</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme4.jpg" alt="Art 4" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">04</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme5.jpg" alt="Art 5" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">05</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme6.jpg" alt="Art 6" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">06</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme7.jpg" alt="Art 7" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">07</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme8.jpg" alt="Art 8" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">08</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme9.jpg" alt="Art 9" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">09</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme10.jpg" alt="Art 10" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">10</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme11.jpg" alt="Art 11" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">11</span></div>
-    </div>
-    <div class="gallery-item">
-      <img src="meme12.jpg" alt="Art 12" onerror="this.closest('.gallery-item').style.display='none'">
-      <div class="gallery-item-overlay"><span class="gallery-item-num">12</span></div>
-    </div>
-  </div>
-</section>
+        if (gallery && track && desktop.matches && !reducedMotion.matches) {
+          var rect = gallery.getBoundingClientRect();
+          var scrollable = Math.max(gallery.offsetHeight - window.innerHeight, 1);
+          var progress = Math.min(Math.max(-rect.top / scrollable, 0), 1);
+          var maxShift = Math.max(track.scrollWidth - window.innerWidth + 80, 0);
+          track.style.transform = "translate3d(" + (-progress * maxShift) + "px, 0, 0)";
+          gallery.style.setProperty("--gallery-progress", (progress * 100) + "%");
+        } else if (track) {
+          track.style.transform = "none";
+        }
+      }
 
-<!-- Second marquee -->
-<div class="marquee-strip">
-  <div class="marquee-inner" style="animation-direction: reverse;">
-    <span class="marquee-word"><span class="marquee-dot"></span>FAST DELIVERY</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>SOLANA PROJECTS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>OPEN FOR COMMISSIONS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>DM TO ORDER</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>FAST DELIVERY</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>SOLANA PROJECTS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>OPEN FOR COMMISSIONS</span>
-    <span class="marquee-word"><span class="marquee-dot"></span>DM TO ORDER</span>
-  </div>
-</div>
+      function queueScroll() {
+        if (!frame) frame = window.requestAnimationFrame(updateScroll);
+      }
 
-<!-- Commissions -->
-<section id="commissions">
-  <div class="section-label">PRICING</div>
-  <h2 class="section-title">COMMISSIONS</h2>
+      function moveSpotlight(event) {
+        root.style.setProperty("--pointer-x", event.clientX + "px");
+        root.style.setProperty("--pointer-y", event.clientY + "px");
+      }
 
-  <div class="commission-grid">
-    <div class="commission-card">
-      <div class="commission-type">SINGLE ART</div>
-      <p class="commission-desc">One meme, character, or pfp. Full colour, transparent background. Delivered fast.</p>
-      <div class="commission-price">FROM $20</div>
-      <div class="commission-sub">MAIN CHARACTER FROM $60</div>
-    </div>
-    <div class="commission-card">
-      <div class="commission-type">BATCH ORDER</div>
-      <p class="commission-desc">Need 10, 20, 50+ meme pieces? Fast delivery with consistent style throughout.</p>
-      <div class="commission-price">FROM $200+</div>
-      <div class="commission-sub">DM FOR QUOTE</div>
-    </div>
-    <div class="commission-card">
-      <div class="commission-type">FULL ART PACK</div>
-      <p class="commission-desc">Mascot + banner + meme pack for your project launch. Pairs with a landing page from Benotos Dev.</p>
-      <div class="commission-price">FROM $500</div>
-      <div class="commission-sub">FULL LAUNCH PACKAGE</div>
-    </div>
-  </div>
-</section>
+      window.addEventListener("scroll", queueScroll, { passive: true });
+      window.addEventListener("resize", queueScroll);
+      window.addEventListener("pointermove", moveSpotlight, { passive: true });
+      window.addEventListener("load", updateScroll);
+      updateScroll();
 
-<!-- CTA -->
-<section id="contact" style="padding-top: 0;">
-  <div class="cta-bar">
-    <div class="cta-title">OPEN FOR<br><span>COMMISSIONS.</span></div>
-    <div class="cta-actions">
-      <a href="https://t.me/VEYLOR_STUDIO" target="_blank" class="btn-primary">DM ON TELEGRAM</a>
-      <a href="https://x.com/v3ylor" target="_blank" class="btn-ghost">@V3YLOR</a>
-    </div>
-  </div>
-</section>
+      var revealItems = document.querySelectorAll("[data-reveal]");
 
-<footer>
-  <p>© 2025 VEYLOR STUDIO</p>
-  <p>PART OF <a href="index.html" style="color: var(--accent); text-decoration: none;">VEYLOR.STUDIO</a></p>
-</footer>
+      if ("IntersectionObserver" in window && !reducedMotion.matches) {
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.16 });
 
-<script>
-// ========== LOADER ==========
-window.addEventListener('load', () => {
-  const loader = document.getElementById('loader');
-  setTimeout(() => {
-    loader.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    loader.style.opacity = '0';
-    loader.style.transform = 'translateY(-20px)';
-    setTimeout(() => {
-      loader.style.display = 'none';
-      initHero();
-    }, 600);
-  }, 1400);
-});
+        revealItems.forEach(function (item) {
+          observer.observe(item);
+        });
+      } else {
+        revealItems.forEach(function (item) {
+          item.classList.add("is-visible");
+        });
+      }
 
-// ========== HERO ENTRANCE ==========
-function initHero() {
-  const label = document.getElementById('heroLabel');
-  const chars = document.querySelectorAll('.hero-title .char');
-  const side = document.getElementById('heroSide');
-  const pfp = document.getElementById('heroPfp');
+      var artworks = [
+        { src: "meme1.jpg", label: "Campaign Art", no: "01" },
+        { src: "meme2.jpg", label: "Character Design", no: "02" },
+        { src: "meme3.jpg", label: "Launch Visual", no: "03" },
+        { src: "meme4.jpg", label: "Meme Art", no: "04" },
+        { src: "meme5.jpg", label: "PFP Art", no: "05" },
+        { src: "meme6.jpg", label: "Story Piece", no: "06" },
+        { src: "meme7.jpg", label: "Character Scene", no: "07" },
+        { src: "meme8.jpg", label: "Meme Art", no: "08" },
+        { src: "meme9.jpg", label: "Campaign Art", no: "09" },
+        { src: "meme10.jpg", label: "Community Art", no: "10" },
+        { src: "meme11.jpg", label: "Launch Visual", no: "11" },
+        { src: "meme12.jpg", label: "Character Art", no: "12" }
+      ];
 
-  label.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-  label.style.opacity = '1';
-  label.style.transform = 'translateY(0)';
+      var lightbox = document.getElementById("lightbox");
+      var lightboxClose = document.getElementById("lightboxClose");
+      var lightboxPrev = document.getElementById("lightboxPrev");
+      var lightboxNext = document.getElementById("lightboxNext");
+      var lightboxImage = document.getElementById("lightboxImage");
+      var lightboxLabel = document.getElementById("lightboxLabel");
+      var lightboxNumber = document.getElementById("lightboxNumber");
+      var lightboxCounter = document.getElementById("lightboxCounter");
+      var activeArtwork = 0;
+      var oldOverflow = "";
+      var lastTrigger = null;
 
-  pfp.style.transition = 'opacity 0.6s ease 0.2s';
-  pfp.style.opacity = '1';
+      function renderLightbox() {
+        var art = artworks[activeArtwork];
+        lightboxImage.src = art.src;
+        lightboxImage.alt = art.label + " by V3ylor";
+        lightboxLabel.textContent = art.label;
+        lightboxNumber.textContent = "/" + art.no;
+        lightboxCounter.textContent = art.no + " / " + artworks.length;
+      }
 
-  chars.forEach((char, i) => {
-    setTimeout(() => {
-      char.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      char.style.opacity = '1';
-      char.style.transform = 'translateY(0) rotate(0deg)';
-    }, 300 + i * 80);
-  });
+      function openLightbox(index, trigger) {
+        activeArtwork = index;
+        lastTrigger = trigger;
+        oldOverflow = document.body.style.overflow;
+        renderLightbox();
+        lightbox.removeAttribute("inert");
+        lightbox.classList.add("is-open");
+        lightbox.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        lightboxClose.focus();
+      }
 
-  setTimeout(() => {
-    side.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
-    side.style.opacity = '1';
-    side.style.transform = 'translateY(0)';
-  }, 900);
-}
+      function closeLightbox() {
+        lightbox.classList.remove("is-open");
+        lightbox.setAttribute("aria-hidden", "true");
+        lightbox.setAttribute("inert", "");
+        document.body.style.overflow = oldOverflow;
+        if (lastTrigger) lastTrigger.focus();
+      }
 
-// ========== CUSTOM CURSOR ==========
-const dot = document.getElementById('cursorDot');
-const ring = document.getElementById('cursorRing');
-let ringX = 0, ringY = 0, dotX = 0, dotY = 0;
-let mouseX = 0, mouseY = 0;
+      function changeArtwork(direction) {
+        activeArtwork = (activeArtwork + direction + artworks.length) % artworks.length;
+        renderLightbox();
+      }
 
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-  dot.style.left = mouseX + 'px';
-  dot.style.top = mouseY + 'px';
-});
+      document.querySelectorAll("[data-art-index]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          openLightbox(Number(button.getAttribute("data-art-index")), button);
+        });
+      });
 
-function animateRing() {
-  ringX += (mouseX - ringX) * 0.12;
-  ringY += (mouseY - ringY) * 0.12;
-  ring.style.left = ringX + 'px';
-  ring.style.top = ringY + 'px';
-  requestAnimationFrame(animateRing);
-}
-animateRing();
+      lightboxClose.addEventListener("click", closeLightbox);
+      lightboxPrev.addEventListener("click", function () { changeArtwork(-1); });
+      lightboxNext.addEventListener("click", function () { changeArtwork(1); });
 
-document.querySelectorAll('a, button, .gallery-item').forEach(el => {
-  el.addEventListener('mouseenter', () => { dot.classList.add('hovering'); ring.classList.add('hovering'); });
-  el.addEventListener('mouseleave', () => { dot.classList.remove('hovering'); ring.classList.remove('hovering'); });
-});
+      lightbox.addEventListener("click", function (event) {
+        if (event.target === lightbox) closeLightbox();
+      });
 
-// ========== SCROLL REVEAL ==========
-const revealObserver = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-      revealObserver.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.08 });
-
-document.querySelectorAll('.gallery-item, .commission-card, .cta-bar').forEach(el => {
-  revealObserver.observe(el);
-});
-
-// ========== GLITCH ON TITLE HOVER ==========
-const heroTitle = document.getElementById('heroTitle');
-if (heroTitle) {
-  heroTitle.addEventListener('mouseenter', () => {
-    document.querySelectorAll('.hero-title .char').forEach((char, i) => {
-      setTimeout(() => {
-        char.style.animation = 'none';
-        char.offsetHeight;
-        char.style.animation = 'glitchChar 0.3s ease forwards';
-      }, i * 40);
-    });
-  });
-}
-
-// ========== PARALLAX WATERMARK ==========
-document.addEventListener('scroll', () => {
-  const watermark = document.querySelector('.hero-watermark');
-  const scrollY = window.scrollY;
-  if (watermark) {
-    watermark.style.transform = `translate(-50%, calc(-50% + ${scrollY * 0.3}px))`;
-  }
-});
-</script>
-
+      document.addEventListener("keydown", function (event) {
+        if (!lightbox.classList.contains("is-open")) return;
+        if (event.key === "Escape") closeLightbox();
+        if (event.key === "ArrowRight") changeArtwork(1);
+        if (event.key === "ArrowLeft") changeArtwork(-1);
+      });
+    })();
+  </script>
 </body>
 </html>
